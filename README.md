@@ -6,7 +6,7 @@ NGINX Status CLI
 apt-get install nodejs npm
 
 npm install blessed
-npm install valid-url
+npm install process
 npm install markup-js
 ```
 
