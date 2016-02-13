@@ -1,4 +1,6 @@
 
-HTTP upstreams template / TODO
-
+  {{data}}{bold}{{name}}{/bold}
+  {{peers}}{{id}}	{red-fg}{{if state|equals>up}}{/red-fg}{{/if}}{{server}}{/red-fg}	{{state}}	{{requests}}
+  {{/peers}}
+  {{/data}}
 

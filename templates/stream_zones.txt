@@ -1,0 +1,8 @@
+
+  {{data}}{red-fg}{{name}}{/red-fg}
+  	Connections:    {{connections}}
+  	Received (Bytes): {{received}}
+  	Sent (Bytes): {{sent}}
+	
+  {{/data}}
+

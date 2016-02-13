@@ -1,7 +1,4 @@
 
-{center}{{if server_zones}}| (1) HTTP Server zones {{/if}} {{if upstreams}}| (2) HTTP Upstreams {{/if}} {{if stream.server_zones}}| (3) TCP Server Zones {{/if}} {{if stream.upstreams}}| (4) TCP Upstreams {{/if}} {{if dgram.server_zones}}| (5) UDP Server zones {{/if}} {{if dgram.upstreams}}| (6) UDP Upstreams {{/if}} |{/center}
-
-
 	NGINX Version:  {{nginx_version}}
 	Address:        {{address}}
 	PID:            {{pid}}

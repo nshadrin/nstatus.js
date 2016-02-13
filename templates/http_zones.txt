@@ -1,3 +1,14 @@
 
+  {{data}}	{red-fg}{{name}}{/red-fg}
+  Requests:    {{requests}}
+  Discarded: {{discarded}}
+  Received (Bytes): {{received}}	Sent (Bytes): {{sent}}
+  Responses:
+  	1xx:   {{responses.1xx}}
+  	2xx:   {{responses.2xx}}
+  	3xx:   {{responses.3xx}}
+  	4xx:   {{responses.4xx}}
+  	5xx:   {{responses.5xx}}
+	
+  {{/data}}
 
-HTTP zones template / TODO
