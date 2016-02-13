@@ -3,7 +3,7 @@ NGINX Plus Dashboard - Command line variant
 
 # Screenshot
 
-![Screenshot][(/nshadrin/nstatus.js/raw/master/img/nstatus-screenshot.png)]
+![Screenshot][(https://raw.githubusercontent.com/nshadrin/nstatus.js/master/nstatus-screenshot.png)]
 
 # Installation (for Ubuntu):
 ```
