@@ -15,8 +15,6 @@ var templateHttpZones =		fs.readFileSync("templates/http_zones.txt", "utf8");
 var templateHttpUpstreams =	fs.readFileSync("templates/http_upstreams.txt", "utf8");
 var templateStreamZones =	fs.readFileSync("templates/stream_zones.txt", "utf8");
 var templateStreamUpstreams =	fs.readFileSync("templates/stream_upstreams.txt", "utf8");
-var templateDgramZones =	fs.readFileSync("templates/dgram_zones.txt", "utf8");
-var templateDgramUpstreams =	fs.readFileSync("templates/dgram_upstreams.txt", "utf8");
 
 var tabview = 0;
 var olddata = '';
@@ -140,14 +138,8 @@ function drawScreen() {
 			contentBody = Mark.up(templateStreamUpstreams, contentJson);
 			break;
 		case 5:
-			jsondata.tabview = 5;
-			var contentJson = prepareList(jsondata.dgram.server_zones);
-			contentBody = Mark.up(templateDgramZones, contentJson);
 			break;
 		case 6:
-			jsondata.tabview = 6;
-			var contentJson = prepareList(jsondata.dgram.upstreams);
-			contentBody = Mark.up(templateDgramUpstreams, contentJson);
 			break;
 
 	}
