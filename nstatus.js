@@ -16,7 +16,7 @@ var templateHttpUpstreams =	fs.readFileSync("templates/http_upstreams.txt", "utf
 var templateStreamZones =	fs.readFileSync("templates/stream_zones.txt", "utf8");
 var templateStreamUpstreams =	fs.readFileSync("templates/stream_upstreams.txt", "utf8");
 
-var tabview = 0;
+var tabview = 1;
 var olddata = '';
 var jsondata = '';
 
@@ -58,13 +58,12 @@ function loadScreen() {
 		return process.exit(0);
 	});
 
-	screen.key(['1'], function(ch, key) { tabview = 1; drawScreen(); });
+	screen.key(['1','0','escape'], function(ch, key) { tabview = 1; drawScreen(); });
 	screen.key(['2'], function(ch, key) { tabview = 2; drawScreen(); });
 	screen.key(['3'], function(ch, key) { tabview = 3; drawScreen(); });
 	screen.key(['4'], function(ch, key) { tabview = 4; drawScreen(); });
 	screen.key(['5'], function(ch, key) { tabview = 5; drawScreen(); });
 	screen.key(['6'], function(ch, key) { tabview = 6; drawScreen(); });
-	screen.key(['0','escape'], function(ch, key) { tabview = 0; drawScreen(); });
 	
 	screen.key(['down'], function(ch, key) { box.scroll(2); screen.render(); });
 	screen.key(['up'], function(ch, key) { box.scroll(-2); screen.render(); });
@@ -76,6 +75,7 @@ function loadScreen() {
 function loadStatus(uri) {
 	http.get({
 		host: url.parse(process.argv[2]).hostname,
+		port: url.parse(process.argv[2]).port,
 		path: '/status',
 		//port: url.parse(process.argv[2]).port
 		}, function(response) {
@@ -113,33 +113,33 @@ function prepareList(objectJson){
 function drawScreen() {
 	var contentBody;
 	switch(tabview) {
-		case 0:
-			jsondata.tabview = 0;
-			contentBody = Mark.up(templateMain, jsondata);
-			break;
 		case 1:
 			jsondata.tabview = 1;
-			var contentJson = prepareList(jsondata.server_zones);
-			contentBody = Mark.up(templateHttpZones, contentJson);
+			contentBody = Mark.up(templateMain, jsondata);
 			break;
 		case 2:
 			jsondata.tabview = 2;
-			var contentJson = prepareList(jsondata.upstreams);
-			contentBody = Mark.up(templateHttpUpstreams, contentJson);
+			var contentJson = prepareList(jsondata.server_zones);
+			contentBody = Mark.up(templateHttpZones, contentJson);
 			break;
 		case 3:
 			jsondata.tabview = 3;
-			var contentJson = prepareList(jsondata.stream.server_zones);
-			contentBody = Mark.up(templateStreamZones, contentJson);
+			var contentJson = prepareList(jsondata.upstreams);
+			contentBody = Mark.up(templateHttpUpstreams, contentJson);
 			break;
 		case 4:
 			jsondata.tabview = 4;
+			var contentJson = prepareList(jsondata.stream.server_zones);
+			contentBody = Mark.up(templateStreamZones, contentJson);
+			break;
+		case 5:
+			jsondata.tabview = 5;
 			var contentJson = prepareList(jsondata.stream.upstreams);
 			contentBody = Mark.up(templateStreamUpstreams, contentJson);
 			break;
-		case 5:
-			break;
 		case 6:
+			break;
+		case 7:
 			break;
 
 	}
