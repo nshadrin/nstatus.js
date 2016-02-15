@@ -12,14 +12,13 @@ var Mark = require("markup-js");
 var templateMain =		fs.readFileSync("templates/main.txt", "utf8");
 var templateTitle =		fs.readFileSync("templates/title.txt", "utf8");
 var templateHttpZones =		fs.readFileSync("templates/http_zones.txt", "utf8");
-var templateHttpUpstreams =	fs.readFileSync("templates/http_upstreams.txt", "utf8");
 var templateStreamZones =	fs.readFileSync("templates/stream_zones.txt", "utf8");
 var templateStreamUpstreams =	fs.readFileSync("templates/stream_upstreams.txt", "utf8");
 
 var tabview = 1;
 var olddata = '';
 var jsondata = '';
-
+var refreshRate = 500; //ms
 
 function loadScreen() {
 	screen = blessed.screen({
@@ -27,26 +26,56 @@ function loadScreen() {
 	});
 
 	screen.title = 'NGINX Plus Dashboard';
-
-	box = blessed.box({
+	layout = blessed.layout({
+		parent: screen,
+		top: 'center',
+		scrollable: true,
+		alwaysScroll: true,
+		left: 'center',
 		width: '100%',
 		height: '100%',
-		scrollable: true,
-		scrollbar: true,
-		alwaysScroll: true,
+		border: 'line',
+		style: {
+			bg: '#050000',
+			border: {
+				fg: 'blue'
+			}
+		},
+		
+	});
+
+	box = blessed.box({
+		parent: layout,
+		width: '100%',
+		height: 'shrink',
+		scrollbar: false,
 		top: '0',
 		tags: true,
-		content: "\n\n{center}Waiting for dashboard data...{/center}",
+		content: "\n\n{center}Waiting for data from NGINX Plus...{/center}",
 		border: {
-			type: 'line'
+			type: 'none'
 		},
 		style: {
+			header: {
+				fg: '#98FB98',
+				bg: 'blue'
+			},
 			fg: '#98FB98',
 			bg: '#000000'
 		}
 	});
-
-	screen.append(box);
+	table = blessed.table({
+		parent: layout,
+		width: '100%',
+		height: 'shrink',
+		tags: true,
+		noCellBorders: true,
+		pad: 0,
+		style: {
+			fg: '#98FB98',
+			bg: '#111111'
+		}
+	});
 
 	box.key('enter', function(ch, key) {
 		loadStatus('');
@@ -65,14 +94,81 @@ function loadScreen() {
 	screen.key(['5'], function(ch, key) { tabview = 5; drawScreen(); });
 	screen.key(['6'], function(ch, key) { tabview = 6; drawScreen(); });
 	
-	screen.key(['down'], function(ch, key) { box.scroll(2); screen.render(); });
-	screen.key(['up'], function(ch, key) { box.scroll(-2); screen.render(); });
+	screen.key(['down'], function(ch, key) { layout.scroll(2); screen.render(); });
+	screen.key(['up'], function(ch, key) { layout.scroll(-2); screen.render(); });
 
 	box.focus();
 	screen.render();
 }
 
+function generateUpstreamTable(objectJson){
+	var data = [];
+	data[0] = [
+		"IP",
+		"W",
+		"Requests",
+		"1xx",
+		"2xx",
+		"3xx",
+		"4xx",
+		"5xx",
+		"Sent",
+		"Received",
+		"Checks",
+		"Fails",
+		"Unhealthy"
+	
+	];
+	for(var x in objectJson){
+		data[data.length] = [ "{blue-bg}" + x + "{/grey-bg}"];
+		for(var y in objectJson[x].peers){
+			linearr = [];
+			var colorOpen = '';
+			var colorClose = '';
+			switch(JSON.stringify(objectJson[x].peers[y].state)){
+				case '"up"':
+					colorOpen = "{green-fg}";
+					colorClose = "{/green-fg}";
+
+					break;
+				case '"drain"':
+					colorOpen = "{blue-fg}";
+					colorClose = "{/blue-fg}";
+					break;
+				case '"down"':
+					colorOpen = "{grey-fg}";
+					colorClose = "{/grey-fg}";
+					break;
+
+				default:
+					colorOpen = "{red-fg}";
+					colorClose = "{/red-fg}";
+					break;
+
+			}
+			linearr.push(
+				colorOpen + objectJson[x].peers[y].server + colorClose,
+				JSON.stringify(objectJson[x].peers[y].weight),
+				JSON.stringify(objectJson[x].peers[y].requests),
+				JSON.stringify(objectJson[x].peers[y].responses["1xx"]),
+				JSON.stringify(objectJson[x].peers[y].responses["2xx"]),
+				JSON.stringify(objectJson[x].peers[y].responses["3xx"]),
+				JSON.stringify(objectJson[x].peers[y].responses["4xx"]),
+				JSON.stringify(objectJson[x].peers[y].responses["5xx"]),
+				JSON.stringify(parseInt(objectJson[x].peers[y].sent/1024)) + 'kB',
+				JSON.stringify(parseInt(objectJson[x].peers[y].received/1024)) + 'kB',
+				JSON.stringify(objectJson[x].peers[y].health_checks.checks),
+				JSON.stringify(objectJson[x].peers[y].health_checks.fails),
+				JSON.stringify(objectJson[x].peers[y].health_checks.unhealthy)
+				);
+			data[data.length] = linearr;
+		}
+	}
+	table.setData(data);
+}
+
 function loadStatus(uri) {
+	screen.title = "NGINX Plus: " + url.parse(process.argv[2]).hostname;
 	http.get({
 		host: url.parse(process.argv[2]).hostname,
 		port: url.parse(process.argv[2]).port,
@@ -88,8 +184,8 @@ function loadStatus(uri) {
 				if(olddata.length == 0) {
 					olddata = jsondata;
 				}
-				jsondata.connections.acceptedDelta = jsondata.connections.accepted - olddata.connections.accepted;
-				jsondata.requests.totalDelta = jsondata.requests.total - olddata.requests.total;
+				jsondata.connections.acceptedDelta = (jsondata.connections.accepted - olddata.connections.accepted) * 1000 / refreshRate;
+				jsondata.requests.totalDelta = (jsondata.requests.total - olddata.requests.total) * 1000 / refreshRate;
 				olddata = jsondata;
 				drawScreen();
 			});
@@ -101,11 +197,8 @@ function prepareList(objectJson){
 	var arr = {};
 	arr.data = [];
 	for(var x in objectJson){
-	//	screen.destroy();
 		objectJson[x].name=x;
 		arr.data.push(objectJson[x]);
-	//	console.log("\n\n" + x + objectJson[x].requests);
-	//	process.exit;
 	}
 	return arr;
 }
@@ -116,26 +209,47 @@ function drawScreen() {
 		case 1:
 			jsondata.tabview = 1;
 			contentBody = Mark.up(templateMain, jsondata);
+			var content = Mark.up(templateTitle,jsondata) + contentBody;
+			box.setContent(content);
+			table.hide();
+			screen.render();
 			break;
 		case 2:
 			jsondata.tabview = 2;
 			var contentJson = prepareList(jsondata.server_zones);
 			contentBody = Mark.up(templateHttpZones, contentJson);
+			var content = Mark.up(templateTitle,jsondata) + contentBody;
+			table.hide();
+			box.setContent(content);
+			screen.render();
 			break;
 		case 3:
 			jsondata.tabview = 3;
-			var contentJson = prepareList(jsondata.upstreams);
-			contentBody = Mark.up(templateHttpUpstreams, contentJson);
+			//var contentJson = prepareList(jsondata.upstreams);
+			contentBody = '';//Mark.up(templateHttpUpstreams, contentJson);
+			generateUpstreamTable(jsondata.upstreams);
+			var content = Mark.up(templateTitle,jsondata) + contentBody;
+			box.setContent(content);
+			table.show();
+			screen.render();
 			break;
 		case 4:
 			jsondata.tabview = 4;
 			var contentJson = prepareList(jsondata.stream.server_zones);
 			contentBody = Mark.up(templateStreamZones, contentJson);
+			var content = Mark.up(templateTitle,jsondata) + contentBody;
+			table.hide();
+			box.setContent(content);
+			screen.render();
 			break;
 		case 5:
 			jsondata.tabview = 5;
 			var contentJson = prepareList(jsondata.stream.upstreams);
 			contentBody = Mark.up(templateStreamUpstreams, contentJson);
+			var content = Mark.up(templateTitle,jsondata) + contentBody;
+			table.hide();
+			box.setContent(content);
+			screen.render();
 			break;
 		case 6:
 			break;
@@ -143,14 +257,11 @@ function drawScreen() {
 			break;
 
 	}
-	var content = Mark.up(templateTitle,jsondata) + contentBody;
-	box.setContent(content);
-	screen.render();
 }
 
 loadScreen();
 loadStatus('');
-setInterval(loadStatus,1000);
+setInterval(loadStatus,refreshRate);
 
 
 
