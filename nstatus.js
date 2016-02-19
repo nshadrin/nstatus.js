@@ -69,11 +69,17 @@ function loadScreen() {
 		width: '100%',
 		height: 'shrink',
 		tags: true,
-		noCellBorders: true,
 		pad: 0,
+		noCellBorders: 1,
 		style: {
-			fg: '#98FB98',
-			bg: '#111111'
+			cell: {
+				fg: '#98FB98',
+				bg: '#000000'
+			},
+			header: {
+				fg: '#FFFFFF',
+				bg: '#004400'
+			}
 		}
 	});
 
@@ -180,7 +186,18 @@ function loadStatus(uri) {
 				body += d;
 			});
 			response.on('end', function() {
-				jsondata = JSON.parse(body);
+				try {
+					jsondata = JSON.parse(body);
+				} catch(e) {
+					screen.destroy();
+					console.log("No JSON output found at " + process.argv[2] + ", exiting.");
+					process.exit(1);
+				}
+				if (jsondata.version != 6 && !jsondata.nginx_version) {
+					screen.destroy();
+					console.log("NGINX Plus API version mismatch or other errors");
+					process.exit(1);
+				}
 				if(olddata.length == 0) {
 					olddata = jsondata;
 				}
