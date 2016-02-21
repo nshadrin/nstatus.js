@@ -14,11 +14,13 @@ var templateTitle =		fs.readFileSync("templates/title.txt", "utf8");
 var templateHttpZones =		fs.readFileSync("templates/http_zones.txt", "utf8");
 var templateStreamZones =	fs.readFileSync("templates/stream_zones.txt", "utf8");
 var templateStreamUpstreams =	fs.readFileSync("templates/stream_upstreams.txt", "utf8");
+var templateHttpUpstreams = fs.readFileSync("templates/http_upstreams.txt", "utf8");
 
 var tabview = 1;
 var olddata = '';
 var jsondata = '';
 var refreshRate = 500; //ms
+var simpleView = false;
 
 function loadScreen() {
 	screen = blessed.screen({
@@ -41,7 +43,7 @@ function loadScreen() {
 				fg: 'blue'
 			}
 		},
-		
+
 	});
 
 	box = blessed.box({
@@ -99,9 +101,16 @@ function loadScreen() {
 	screen.key(['4'], function(ch, key) { tabview = 4; drawScreen(); });
 	screen.key(['5'], function(ch, key) { tabview = 5; drawScreen(); });
 	screen.key(['6'], function(ch, key) { tabview = 6; drawScreen(); });
-	
+
 	screen.key(['down'], function(ch, key) { layout.scroll(2); screen.render(); });
 	screen.key(['up'], function(ch, key) { layout.scroll(-2); screen.render(); });
+
+	screen.key(['s'], function(ch, key) {
+		 simpleView = !simpleView;
+		 if (tabview == 3) {
+			 drawScreen();
+		 }
+	  });
 
 	box.focus();
 	screen.render();
@@ -123,7 +132,7 @@ function generateUpstreamTable(objectJson){
 		"Checks",
 		"Fails",
 		"Unhealthy"
-	
+
 	];
 	for(var x in objectJson){
 		data[data.length] = [ "{blue-bg}" + x + "{/grey-bg}"];
@@ -242,12 +251,17 @@ function drawScreen() {
 			break;
 		case 3:
 			jsondata.tabview = 3;
-			//var contentJson = prepareList(jsondata.upstreams);
-			contentBody = '';//Mark.up(templateHttpUpstreams, contentJson);
-			generateUpstreamTable(jsondata.upstreams);
+			var contentBody = '';
+			if (simpleView) {
+				table.hide();
+				var contentJson = prepareList(jsondata.upstreams);
+				contentBody = Mark.up(templateHttpUpstreams, contentJson);
+			} else {
+				generateUpstreamTable(jsondata.upstreams);
+				table.show();
+			}
 			var content = Mark.up(templateTitle,jsondata) + contentBody;
 			box.setContent(content);
-			table.show();
 			screen.render();
 			break;
 		case 4:
@@ -279,7 +293,3 @@ function drawScreen() {
 loadScreen();
 loadStatus('');
 setInterval(loadStatus,refreshRate);
-
-
-
-
