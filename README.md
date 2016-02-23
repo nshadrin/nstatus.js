@@ -12,12 +12,12 @@ apt-get install nodejs npm
 npm install blessed
 npm install process
 npm install markup-js
+npm install yargs
 ```
 
 # Run
-`nodejs nstatus.js http://demo.nginx.com`
+`nodejs nstatus.js http://demo.nginx.com/status`
 
 # TODOs
 * Tabs other than main
 * URLs other than demo.nginx.com
-
