@@ -7,6 +7,20 @@ var process = require('process');
 var http = require('http');
 var url = require('url');
 var fs = require("fs");
+var argv = require('yargs')
+	.usage('Usage: $0 [options] <url>')
+	.help('h')
+	.alias('h', 'help')
+	.boolean('s')
+	.default('s', false)
+	.alias('s', 'simple')
+	.describe('s', 'Simple view mode on')
+	.example('$0 http://demo.nginx.com/status', 'Shows stats from demo.nginx.com/status')
+	.demand(1)
+	.argv;
+
+var statusURL = argv._[0];
+var simpleView = argv.s;
 
 var Mark = require("markup-js");
 var templateMain =		fs.readFileSync("templates/main.txt", "utf8");
@@ -20,7 +34,7 @@ var tabview = 1;
 var olddata = '';
 var jsondata = '';
 var refreshRate = 500; //ms
-var simpleView = false;
+
 
 function loadScreen() {
 	screen = blessed.screen({
@@ -86,7 +100,7 @@ function loadScreen() {
 	});
 
 	box.key('enter', function(ch, key) {
-		loadStatus('');
+		loadStatus();
 	});
 
 	screen.key(['q', 'C-c'], function(ch, key) {
@@ -182,13 +196,12 @@ function generateUpstreamTable(objectJson){
 	table.setData(data);
 }
 
-function loadStatus(uri) {
-	screen.title = "NGINX Plus: " + url.parse(process.argv[2]).hostname;
+function loadStatus() {
+	screen.title = "NGINX Plus: " + statusURL;
 	http.get({
-		host: url.parse(process.argv[2]).hostname,
-		port: url.parse(process.argv[2]).port,
-		path: '/status',
-		//port: url.parse(process.argv[2]).port
+		host: url.parse(statusURL).hostname,
+		port: url.parse(statusURL).port,
+		path: url.parse(statusURL).path,
 		}, function(response) {
 			var body = '';
 			response.on('data', function(d) {
@@ -199,7 +212,7 @@ function loadStatus(uri) {
 					jsondata = JSON.parse(body);
 				} catch(e) {
 					screen.destroy();
-					console.log("No JSON output found at " + process.argv[2] + ", exiting.");
+					console.log("No JSON output found at " + statusURL + ", exiting.");
 					process.exit(1);
 				}
 				if (jsondata.version != 6 && !jsondata.nginx_version) {
@@ -291,5 +304,5 @@ function drawScreen() {
 }
 
 loadScreen();
-loadStatus('');
+loadStatus();
 setInterval(loadStatus,refreshRate);
