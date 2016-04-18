@@ -7,20 +7,9 @@ var process = require('process');
 var http = require('http');
 var url = require('url');
 var fs = require("fs");
-var argv = require('yargs')
-	.usage('Usage: $0 [options] <url>')
-	.help('h')
-	.alias('h', 'help')
-	.boolean('s')
-	.default('s', false)
-	.alias('s', 'simple')
-	.describe('s', 'Simple view mode on')
-	.example('$0 http://demo.nginx.com/status', 'Shows stats from demo.nginx.com/status')
-	.demand(1)
-	.argv;
 
-var statusURL = argv._[0];
-var simpleView = argv.s;
+var simpleView = false
+var statusURL = process.argv[2]
 
 var Mark = require("markup-js");
 var templateMain =		fs.readFileSync("templates/main.txt", "utf8");

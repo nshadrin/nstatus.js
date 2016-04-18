@@ -9,15 +9,11 @@ NGINX Plus Dashboard - Command line variant
 ```
 apt-get install nodejs npm
 
-npm install blessed
-npm install process
-npm install markup-js
-npm install yargs
+npm install blessed process markup-js
 ```
 
 # Run
-`nodejs nstatus.js http://demo.nginx.com/status`
+`nstatus.js http://demo.nginx.com/status`
 
 # TODOs
-* Tabs other than main
-* URLs other than demo.nginx.com
+Better error handling
